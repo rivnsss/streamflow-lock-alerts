@@ -137,7 +137,11 @@ for (const item of signatures) {
   checked++;
 
   const logs = tx.meta?.logMessages || [];
-
+console.log(
+  "DEBUG",
+  item.signature,
+  logs.filter(line => /Instruction:|Program log:/i.test(line))
+);
   const candidate = logs.some(line =>
     /Instruction: (CreateLock|CreateTokenLock)\b/i.test(line)
   );
