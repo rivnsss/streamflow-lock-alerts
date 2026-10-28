@@ -53,12 +53,6 @@ const signatures = await rpc("getSignaturesForAddress", [
   { limit: 30, commitment: "confirmed" }
 ]);
 
-await sendTelegram(
-  "✅ Streamflow Lock Alert Bot aktif!\n\n" +
-  "Tes koneksi Telegram berhasil.\n" +
-  "Bot siap menjalankan pemindaian."
-);
-
 let checked = 0;
 
 for (const item of signatures) {
