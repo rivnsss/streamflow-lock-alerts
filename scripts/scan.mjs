@@ -10,16 +10,67 @@ if (!TOKEN || !CHAT_ID) {
 }
 
 async function rpc(method, params) {
-  const res = await fetch(RPC, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method,
-      params
-    })
-  });
+  const maxAttempts = 5;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await fetch(RPC, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method,
+          params
+        })
+      });
+
+      const raw = await res.text();
+
+      if (res.status === 429 || res.status >= 500) {
+        throw new Error(`HTTP ${res.status}: ${raw.slice(0, 150)}`);
+      }
+
+      if (!res.ok) {
+        throw new Error(`RPC HTTP ${res.status}: ${raw.slice(0, 150)}`);
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error(
+          `RPC returned invalid JSON: ${raw.slice(0, 150)}`
+        );
+      }
+
+      if (data.error) {
+        throw new Error(
+          `RPC error: ${JSON.stringify(data.error)}`
+        );
+      }
+
+      return data.result;
+
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+
+      const delay = Math.min(1000 * 2 ** (attempt - 1), 16000);
+
+      console.log(
+        `RPC request failed (attempt ${attempt}/${maxAttempts}). ` +
+        `Retrying in ${delay / 1000}s...`
+      );
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+                                                             }
 
   const data = await res.json();
   if (!res.ok || data.error) {
