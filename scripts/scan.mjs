@@ -50,7 +50,7 @@ async function sendTelegram(text) {
 
 const signatures = await rpc("getSignaturesForAddress", [
   PROGRAM,
-  { limit: 30, commitment: "confirmed" }
+  { limit: 100, commitment: "confirmed" }
 ]);
 
 let checked = 0;
